@@ -13,7 +13,6 @@ class Fun < CampfireBot::Plugin
   end
 
   def say(m)
-    p m
     m['room'].speak(m["body"])
   end
 

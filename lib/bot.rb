@@ -125,7 +125,7 @@ module CampfireBot
       # only print non-bot messages
       unless @config['fullname'] == message[:user]
         if body.length >= 10
-          puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message][0..10]...}"
+          puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message][0..10]}..."
         else
           puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message]}"
         end

@@ -24,6 +24,6 @@ class Austin < CampfireBot::Plugin
     quote.each {|l| msg.speak l}
 
   rescue
-    msg['room'].speak 'Austin Powers: Yeah, baby, yeah'
+    msg.speak 'Austin Powers: Yeah, baby, yeah'
   end
 end

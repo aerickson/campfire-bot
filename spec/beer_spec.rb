@@ -214,4 +214,6 @@ describe "beer_transactiona and balance" do
   it "should handle equivalent transactions equivalently" do
     pending
   end
+  
+  
 end

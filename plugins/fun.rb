@@ -13,30 +13,30 @@ class Fun < CampfireBot::Plugin
   end
 
   def say(m)
-    m['room'].speak(m["body"])
+    m.speak(m[:message])
   end
 
   def do_it(m = nil)
-    m['room'].speak('Do it!')
+    m.speak('Do it!')
   end
 
   def undo_it(m)
-    m['room'].speak('Undo it!')
+    m.speak('Undo it!')
   end
-
+  
   def do_or_do_not(m)
     responses = ['Do it!', 'Don\'t do it!', 'Undo it!']
-    m['room'].speak(responses.rand)
+    m.speak(responses.rand)
   end
 
   def agree_with_tim(m)
-    m['room'].speak('I agree with Tim.') unless @last_agreed > 15.minutes.ago
+    m.speak('I agree with Tim.') unless @last_agreed > 15.minutes.ago
     @last_agreed = Time.now
   end
 
   def greet(m)
     messages = ['Howdy', 'Wassup', 'Greets', 'Hello', 'Hey there', "It's a", 'Good day']
-    m['room'].speak("#{messages.rand} #{m['user']['name'].split(' ')[0]}")
+    m.speak("#{messages.rand} #{m[:person].split(' ')[0]}")
   end
 
   def howareya(m)

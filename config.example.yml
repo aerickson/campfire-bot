@@ -13,8 +13,6 @@ development:
   disable_plugins: 
     - xkcd
     - basecamp
-    - unfuddle
-    - pivotal
 production:
   site: campfire_subdomain_name
   use_ssl: true
@@ -28,6 +26,5 @@ production:
   disable_plugins: 
     - xkcd
     - basecamp
-    - pivotal
   svn_urls:
     - http://your.svn/url/

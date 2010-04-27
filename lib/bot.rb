@@ -2,13 +2,13 @@
 require 'rubygems'
 require 'active_support'
 require 'yaml'
+require 'eventmachine'
 
 # Local Libs
 require "#{BOT_ROOT}/lib/message"
 require "#{BOT_ROOT}/lib/event"
 require "#{BOT_ROOT}/lib/plugin"
 
-# requires http://github.com/bgreenlee/tinder to fix broken listen support
 gem 'tinder', '>= 1.3.1'; require 'tinder'
 
 module CampfireBot
@@ -30,19 +30,37 @@ module CampfireBot
     end
 
     def connect
-      load_plugins
-      join_rooms
+      load_plugins unless !@config['enable_plugins']
+      begin
+        join_rooms
+      rescue Errno::ENETUNREACH, SocketError => e
+        abort "We had trouble connecting to the network: #{e.class}: #{e.message}"
+      rescue Exception => e
+        abort "Unhandled exception while joining rooms: #{e.class}: #{e.message}"
+      end
     end
 
     def run(interval = 5)
       catch(:stop_listening) do
         trap('INT') { throw :stop_listening }
+
+        # since room#listen blocks, stick it in its own thread
+        @rooms.each_pair do |room_name, room|
+          Thread.new do
+            begin
+              room.listen(:timeout => 8) do |raw_msg|
+                handle_message(CampfireBot::Message.new(raw_msg.merge({:room => room})))
+              end
+            rescue Exception => e
+              trace = e.backtrace.join("\n")
+              abort "something went wrong! #{e.message}\n #{trace}"
+            end
+          end
+        end
+
         loop do
           begin
             @rooms.each_pair do |room_name, room|
-              room.listen do |raw_msg|
-                handle_message(CampfireBot::Message.new(raw_msg.merge({:room => room})))
-              end
 
               # I assume if we reach here, all the network-related activity has occured successfully
               # and that we're outside of the retry-cycle
@@ -53,8 +71,24 @@ module CampfireBot
               # EventHanlder.handle_time(optional_arg = Time.now)
 
               # Run time-oriented events
-              Plugin.registered_intervals.each        { |handler| handler.run(CampfireBot::Message.new(:room => room)) }
-              Plugin.registered_times.each_with_index { |handler, index| Plugin.registered_times.delete_at(index) if handler.run }
+              Plugin.registered_intervals.each  do |handler|
+                begin
+                  handler.run(CampfireBot::Message.new(:room => room))
+                rescue
+                  puts "error running #{handler.inspect}: #{$!.class}: #{$!.message}",
+                    $!.backtrace
+                end
+              end
+
+              Plugin.registered_times.each_with_index  do |handler, index|
+                begin
+                  Plugin.registered_times.delete_at(index) if handler.run
+                rescue
+                  puts "error running #{handler.inspect}: #{$!.class}: #{$!.message}",
+                    $!.backtrace
+                end
+              end
+
             end
             STDOUT.flush
             sleep interval
@@ -74,41 +108,28 @@ module CampfireBot
     private
 
     def join_rooms
-      if @config['guesturl']
-        join_rooms_as_guest
-      else
-        join_rooms_as_user
-      end
-      puts "#{Time.now} | #{BOT_ENVIRONMENT} | Loader | Ready."
-    end
-
-    def join_rooms_as_guest
-      baseurl, guest_token  = @config['guesturl'].split(/.com\//)
-      @campfire             = Tinder::Campfire.new(@config['site'], :guesturl => @config['guesturl'], :ssl => !!@config['ssl'])
-      @rooms[guest_token]   = @campfire.find_room_by_guest_hash(guest_token, @config['nickname'])
-      @rooms[guest_token].join
+      join_rooms_as_user
+      puts "#{Time.now} | #{BOT_ENVIRONMENT} | CampfireBot | Joined all rooms."
     end
 
     def join_rooms_as_user
-      @campfire = Tinder::Campfire.new(@config['site'], :ssl => !!@config['use_ssl'], :username => @config['api_key'], :password => @config['password'])
+      @campfire = Tinder::Campfire.new(@config['site'], :ssl => @config['use_ssl'], :username => @config['api_key'], :password => 'x')
 
       @config['rooms'].each do |room_name|
         @rooms[room_name] = @campfire.find_room_by_name(room_name)
-        @rooms[room_name].join
+        res = @rooms[room_name].join
+        raise Exception.new("got #{res.code} error when joining room #{room_name}: #{res.body}") if res.code != 200
       end
     end
 
     def load_plugins
-      Dir["#{BOT_ROOT}/plugins/*.rb"].each do |x|
-        # skip disabled plugins
-        if @config['disable_plugins'].select{|name| x.include?(name)}.size == 0
-          load x
-        end
+      @config['enable_plugins'].each do |plugin_name|
+        load "#{BOT_ROOT}/plugins/#{plugin_name}.rb"
       end
 
       # And instantiate them
       Plugin.registered_plugins.each_pair do |name, klass|
-        puts "#{Time.now} | #{BOT_ENVIRONMENT} | Loader | loading plugin: #{name}"
+        puts "#{Time.now} | #{BOT_ENVIRONMENT} | CampfireBot | loading plugin: #{name}"
         STDOUT.flush
         Plugin.registered_plugins[name] = klass.new
       end
@@ -117,32 +138,36 @@ module CampfireBot
     def handle_message(message)
       # puts message.inspect
 
-      if message['body'].nil?
-        puts "handling nil messsage 1 '#{message}'"
-        return
-      end
-
-      # only print non-bot messages
-      unless @config['fullname'] == message[:user]
-        if body.length >= 10
-          puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message][0..10]}..."
-        else
-          puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message]}"
+      case message[:type]
+      when "KickMessage"
+        if message[:user][:id] == @campfire.me[:id]
+          puts "#{Time.now} | #{message[:room].name} | CampfireBot | got kicked... rejoining after 10 seconds"
+          sleep 10
+          join_rooms_as_user
+          puts "#{Time.now} | #{message[:room].name} | CampfireBot | rejoined room."
+          return
         end
-      end
-
-      %w(commands speakers messages).each do |type|
-        Plugin.send("registered_#{type}").each do |handler|
-          begin
-            handler.run(message)
-          rescue
-            puts "error running #{handler.inspect}: #{$!.class}: #{$!.message}",
-              $!.backtrace
+      when "TimestampMessage", "AdvertisementMessage"
+        return
+      when "TextMessage", "PasteMessage"
+        # only process non-bot messages
+        unless message[:user][:id] == @campfire.me[:id]
+          puts "#{Time.now} | #{message[:room].name} | #{message[:person]} | #{message[:message]}"
+          %w(commands speakers messages).each do |type|
+            Plugin.send("registered_#{type}").each do |handler|
+              begin
+                handler.run(message)
+              rescue
+                puts "error running #{handler.inspect}: #{$!.class}: #{$!.message}",
+                  $!.backtrace
+              end
+            end
           end
         end
+      else
+        puts "#{Time.now} | #{message[:room].name} | CampfireBot | got message of type #{message['type']} -- discarding"
       end
     end
-
   end
 end
 

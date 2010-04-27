@@ -1,9 +1,9 @@
 module CampfireBot
-  class Message < Hash
+  class Message < HashWithIndifferentAccess
     def initialize(attributes)
       self.merge!(attributes)
-      self[:message] = self['body']
-      self[:person] = self['user']['name']
+      self[:message] = self['body'] if !!self['body']
+      self[:person] = self['user']['name'] if !!self['user']
       self[:room] = attributes[:room]
     end
     

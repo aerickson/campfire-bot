@@ -117,6 +117,7 @@ module CampfireBot
 
       @config['rooms'].each do |room_name|
         @rooms[room_name] = @campfire.find_room_by_name(room_name)
+	raise Exception.new("room not found, please check the name ('#{room_name}')") if @rooms[room_name].nil? 
         res = @rooms[room_name].join
         raise Exception.new("got #{res.code} error when joining room #{room_name}: #{res.body}") if res.code != 200
       end

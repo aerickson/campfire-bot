@@ -2,7 +2,7 @@
 
 # Run this script with the environment as the only argument. eg. ./script/bot development
 # BOT_ENVIRONMENT = ARGV.first
-# BOT_ROOT        = File.join(File.dirname(__FILE__), '..')
+BOT_ROOT        = File.join(File.dirname(__FILE__), '..')
 
 require 'rubygems'
 # require 'bundler/setup'
@@ -14,7 +14,7 @@ require 'bot'
 options = {}
 
 
-begin                                                                                                                                                                                                             
+begin
   optparse = OptionParser.new do |opts|
     opts.banner = "Usage: campfire-bot [options]"
 
@@ -24,6 +24,7 @@ begin
 
     opts.on("-eENVIRONMENT", "--environment ENVIRONMENT", "the environment name as specified in the config file") do |env|
       options[:env] = env
+      BOT_ENVIRONMENT = env
     end  
 
     opts.on( "-pPLUGIN_PATH", "--plugin_path PLUGIN_PATH",

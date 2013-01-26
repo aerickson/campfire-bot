@@ -1,27 +1,11 @@
-development:
-  site: campfire_subdomain_name
-  use_ssl: true
-  rooms:
-  - Main room
-  - Other room
-  api_key: your_api_key
-  nickname: Bot
-  fullname: Bot Name
-  password: not_actually_needed
-  twitter_feed: 'http://search.twitter.com/search.atom?q=from%3Atimriley+OR+from%3Ahughevans+OR+from%3Aschlick+OR+from%3Aseanodowd'
-  twitter_hide_replies: false
-  enable_plugins:
-    - xkcd
-    - basecamp
 production:
   site: cardspring
   use_ssl: true
   rooms:
   - Devs
+  api_key: 5bcf37e2b5c4d5bb7b55750307239640102cc44b
   username: cardspring-bot
   nickname: bot
-  password: cardspringrocks1
-  api_key: 5bcf37e2b5c4d5bb7b55750307239640102cc44b
   twitter_feed: ''
   twitter_hide_replies: false
   enable_plugins:

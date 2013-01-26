@@ -9,9 +9,9 @@ require 'logging'
 require 'fileutils'
 
 # Local Libs
-require "message"
-require "event"
-require "plugin"
+require_relative "message"
+require_relative "event"
+require_relative "plugin"
 
 require 'tinder'
 

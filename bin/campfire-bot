@@ -2,7 +2,7 @@
 
 # Run this script with the environment as the only argument. eg. ./script/bot development
 # BOT_ENVIRONMENT = ARGV.first
-BOT_ROOT        = File.join(File.dirname(__FILE__), '..')
+BOT_ROOT        = File.join(File.dirname(File.expand_path(__FILE__)), '..')
 
 require 'rubygems'
 require 'optparse'

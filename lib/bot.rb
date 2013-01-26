@@ -22,15 +22,16 @@ module CampfireBot
 
     # FIXME - these will be invalid if disconnected. handle this.
     attr_reader :campfire, :rooms, :config, :log, :environment_name
-    
+
     def create(config_file, environment_name, plugin_path)
+      puts plugin_path
       @config   = YAML::load(File.read(config_file))[environment_name]
       @plugin_path = plugin_path
       @environment_name = environment_name
-      
+
       @root_logger = Logging.logger["CampfireBot"]
       @log = Logging.logger[self]
-      
+
       # TODO much of this should be configurable per environment
 
       @root_logger.add_appenders Logging.appenders.rolling_file("#{@environment_name}.log", 
@@ -38,15 +39,11 @@ module CampfireBot
                             :age => 'daily', 
                             :keep => 7)
       @root_logger.level = @config['log_level'] rescue :info
-      
-      @timeouts = 0
-      
-      @rooms    = {}
-      
-    end
 
-    # def initialize
-    # end
+      @timeouts = 0
+
+      @rooms    = {}
+    end
 
     def connect
       load_plugins unless !@config['enable_plugins']
@@ -58,13 +55,13 @@ module CampfireBot
       rescue Exception => e
         @log.fatal "Unhandled exception while joining rooms: #{e.class}: #{e.message} \n #{$!.backtrace.join("\n")}"
         abort "Unhandled exception while joining rooms: #{e.class}: #{e.message} \n #{$!.backtrace.join("\n")}"
-      end  
+      end
     end
 
     def run(interval = 5)
       catch(:stop_listening) do
         trap('INT') { throw :stop_listening }
-        
+
         # since room#listen blocks, stick it in its own thread
         @rooms.each_pair do |room_name, room|
           Thread.new do
@@ -72,7 +69,7 @@ module CampfireBot
               room.listen(:timeout => 8) do |raw_msg|
                 handle_message(CampfireBot::Message.new(raw_msg.merge({:room => room})))
               end
-            rescue Exception => e 
+            rescue Exception => e
               trace = e.backtrace.join("\n")
               abort "something went wrong! #{e.message}\n #{trace}"
             end
@@ -130,7 +127,7 @@ module CampfireBot
       join_rooms_as_user
       @log.info "Joined all rooms."
     end
-    
+
     def join_rooms_as_user
       @campfire = Tinder::Campfire.new(@config['site'], :token => @config['api_key'])
 

@@ -10,6 +10,8 @@ GEM
     faraday_middleware (0.9.0)
       faraday (>= 0.7.4, < 0.9)
     hashie (1.2.0)
+    hpricot (0.8.6)
+    htmlentities (4.3.1)
     http_parser.rb (0.5.3)
     i18n (0.6.1)
     json (1.7.6)
@@ -39,6 +41,8 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  hpricot
+  htmlentities
   i18n
   logging
   mime-types

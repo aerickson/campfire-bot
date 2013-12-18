@@ -88,8 +88,8 @@ class Fun < CampfireBot::Plugin
       selected_user_name = m[:message].strip
     else
       users = m[:room].users.map{|u| u[:name] }
-      selected_user_name = users.choice
+      selected_user_name = users.sample
     end
-    m.speak("#{m[:person]} slaps #{selected_user_name} #{["upside the head", "in the face", "on the rear", "where it counts", "in the knees", "ineffectually", "in the elbow", "on the funny bone", "in the ear", "on the nose", "in the teeth"].choice} with a #{%w(good-sized large decaying moldy spiked sabre-toothed surprised disappointed dramatic enraged rabid bug-eyed rotten foul-smelling demonic cluestick-holding).choice} trout")
+    m.speak("#{m[:person]} slaps #{selected_user_name} #{["upside the head", "in the face", "on the rear", "where it counts", "in the knees", "ineffectually", "in the elbow", "on the funny bone", "in the ear", "on the nose", "in the teeth"].sample} with a #{%w(good-sized large decaying moldy spiked sabre-toothed surprised disappointed dramatic enraged rabid bug-eyed rotten foul-smelling demonic cluestick-holding).sample} trout")
   end
 end

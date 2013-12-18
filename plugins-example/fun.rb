@@ -16,40 +16,40 @@ class Fun < CampfireBot::Plugin
     @last_agreed = 20.minutes.ago
     @log = Logging.logger["CampfireBot::Plugin::Fun"]
   end
-  
+
   def say(m)
     m.speak(m[:message])
   end
-  
+
   def do_it(m = nil)
     m.speak('Do it!')
   end
-  
+
   def undo_it(m)
     m.speak('Undo it!')
   end
-  
+
   def do_or_do_not(m)
     responses = ['Do it!', 'Don\'t do it!', 'Undo it!']
     m.speak(responses.choice)
   end
-  
+
   def agree_with_tim(m)
     m.speak('I agree with Tim.') unless @last_agreed > 15.minutes.ago
     @last_agreed = Time.now
   end
-  
+
   def greet(m)
     messages = ['Howdy', 'Wassup', 'Greets', 'Hello', 'Hey there', "It's a", 'Good day']
     m.speak("#{messages.choice} #{m[:person].split(' ')[0]}")
   end
-  
+
   def howareya(m)
-    messages = ["just great", "peachy", "mas o menos", 
+    messages = ["just great", "peachy", "mas o menos",
     	 "you know how it is", "eh, ok", "pretty good. how about you?"]
     m.speak(messages[rand(messages.size)])
   end
-  
+
   def blame(m)
     # TODO: capture user-submitted entries to a yaml file and regurgitate them
     # TODO: put all the default ones in a separate yaml
@@ -57,19 +57,19 @@ class Fun < CampfireBot::Plugin
       blamed = m[:message].strip
     else
       users = m[:room].users.delete_if {|u| u[:name] == bot.campfire.me[:name]}.map {|u| u[:name]}
-      others = ["nobody", "my", "Microsoft", "Steve Jobs", "the terrorists", "your", 
-                "Project Management", "Development", "Management", "Corporate", "Cartman", "the user", 
+      others = ["nobody", "my", "Microsoft", "Steve Jobs", "the terrorists", "your",
+                "Project Management", "Development", "Management", "Corporate", "Cartman", "the user",
                 "the liberal media", "Wall Street"]
-      
+
       # mostly blame the other users
       if rand(10) >= 2
         blamed = users.choice
-      else 
+      else
         blamed = others.choice
       end
-      
+
     end
-    
+
     case blamed
     when "nobody"
       blamestring = "It's nobody's fault"
@@ -79,10 +79,10 @@ class Fun < CampfireBot::Plugin
       blamestring = "It's all #{blamed}'s fault"
       blamestring = "It's all #{blamed}' fault" if blamed[-1].chr == "s"
     end
-   
+
     m.speak blamestring
   end
-  
+
   def trout(m)
     if m[:message].strip.length > 0
       selected_user_name = m[:message].strip

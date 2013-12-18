@@ -25,6 +25,7 @@ module CampfireBot
 
     def create(config_file, environment_name, plugin_path)
       puts plugin_path
+      # TODO: check if config_file exists...
       @config   = YAML::load(File.read(config_file))[environment_name]
       @plugin_path = plugin_path
       @environment_name = environment_name
@@ -46,7 +47,7 @@ module CampfireBot
     end
 
     def connect
-      load_plugins unless !@config['enable_plugins']
+      load_plugins unless !defined?(@config['enable_plugins'])
       begin
         join_rooms
       rescue Errno::ENETUNREACH, SocketError => e

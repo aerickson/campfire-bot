@@ -1,3 +1,4 @@
 #!/bin/bash
 
-./bin/campfire-bot -c campfire_bot_config.yml -e production -p ../campfire-bot-plugins
+./bin/campfire-bot -c config.yml -p ../campfire-bot-plugins -e $@
+# -p ../campfire-bot-plugins
